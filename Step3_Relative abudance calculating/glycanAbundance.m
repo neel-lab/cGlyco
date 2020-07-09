@@ -1,6 +1,6 @@
-function [newglycanDB,outputfilename] = glycanAbundance(MSrawdata,glycanDB,...
-    loadpath,staticloadpath,OverSegmentationFilter,abundanceExcelname,outputfilepath,varargin)
-% glycanAbundance: Calculate the relative abundance for each potential
+function [newglycanDB,outputfilename] = glycanAbundance(MSrawdata,glycanDBFile,...
+    MSdir,glycnDBdir,OverSegFilter,outputExcel,outputdir,varargin)
+%glycanAbundance: Calculate the relative abundance for each potential
 % glycans based on the MSdata and potential glycans, and write the result
 % into a Excel file.
 %
@@ -8,54 +8,58 @@ function [newglycanDB,outputfilename] = glycanAbundance(MSrawdata,glycanDB,...
 %   loadpath,staticloadpath,OverSegmentationFilter,abundanceExcelname,outputfilepath,varargin)
 %
 % Input:
-%  MSdata: spectra 'peak list' along with corresponding FWHM (full width
+%  MSrawdata: spectra 'peak list' along with corresponding FWHM (full width
 %  at half maximum.
 %
 %  glycanDBname: Candidate glycan structure list including 4 fields: i) glycan structure
 %  list in SGP format, ii) glycan composition, iii)monoisotopic mass and iv)
 %  isotopic distribution.
 %
-%  loadpath: Directory to load MSdatamat.
+%  MSdir: Directory to load MSdatamat.
 %
-%  staticloadpath: Directory to load glycanDB.
+%  glycnDBdir: Directory to load glycanDB.
 %
-%  OverSegmentationFilter: Maximum distance between two adjacent peaks. 
+%  OverSegFilter: Maximum distance between two adjacent peaks. 
 %
-%  abundanceExcelname: Output excel sheet name.
+%  outputExcel: Output excel sheet name.
 %
-%  outputfilepath: Directory to output the excel file
+%  outputdir: Directory to output the excel file
 %
 % Author: Yusen Zhou 
-% Date Lastly Updated: 05/18/20
+% Date Lastly Updated: 06/25/20
 fitOption = '';
 if(length(varargin)==1)
     fitOption = varargin{1};
 end
 
 MSdatamatFile = [MSrawdata '.mat'];
-MSdatamatfullname = fullfile(loadpath,MSdatamatFile);
-load(MSdatamatfullname);
+MSdatamatfullname = fullfile(MSdir,MSdatamatFile);
+load(MSdatamatfullname,'MSdata');
 peaklist = MSdata.peaklist;
-pfwhh    = MSdata.pfwhh;
-glycanDB = [glycanDB '.mat'];
-glycanDBfullpath   = fullfile(staticloadpath,glycanDB);
-load(glycanDBfullpath);
+FWHM     = MSdata.FWHM;
+glycanDBFile = [glycanDBFile '.mat'];
+glycanDBfullpath   = fullfile(glycnDBdir,glycanDBFile);
+load(glycanDBfullpath,'glycanDB');
 if(~isempty(fitOption))
-    fitFunloadpath = [loadpath fitOption '.mat'];
-    load(fitFunloadpath);
-    [newglycanDB,matchedpeakindex] =...
-        msfraction(peaklist,pfwhh,glycanDB,OverSegmentationFilter,fitPara);
+    fitOptionFile = [fitOption, '.mat'];
+    fitFunloadpath = fullfile(MSdir,fitOptionFile);
+    load(fitFunloadpath,'fitPara');
+    [newglycanDB,Residue,matchedpeakindex] =...
+        msfraction(peaklist,FWHM,glycanDB,OverSegFilter,fitPara);
 else
-    [newglycanDB,matchedpeakindex] =...
-        msfraction(peaklist,pfwhh,glycanDB,OverSegmentationFilter);
+    [newglycanDB,Residue,matchedpeakindex] =...
+        msfraction(peaklist,FWHM,glycanDB,OverSegFilter);
 end
-
+MSdata.Residue = Residue;
 outputfilename = '';
 if((~isempty(newglycanDB.abundance)))
-    if(~isempty(abundanceExcelname))&&(~isempty(outputfilepath))
-        filespec_user = [outputfilepath abundanceExcelname '.xlsx'];
-        jpgname1 = [loadpath MSrawdata 'Matched.jpg'];
-        jpgname2 = [loadpath MSrawdata 'Residual.jpg'];
+    if(~isempty(outputExcel))&&(~isempty(outputdir))
+        outputExcel   = [outputExcel '.xlsx'];
+        filespec_user = fullfile(outputdir,outputExcel);
+        MSrawdataFile = [MSrawdata 'Matched.jpg'];
+        jpgname1 = fullfile(MSdir, MSrawdataFile);
+        MSrawdataFile = [MSrawdata 'Residual.jpg'];
+        jpgname2 = fullfile(MSdir, MSrawdataFile);
         try
             Excel=actxGetRunningServer('Excel.Application');
         catch
@@ -69,27 +73,28 @@ if((~isempty(newglycanDB.abundance)))
             Workbook.SaveAs(filespec_user);
         end
         write2Excel(filespec_user,newglycanDB.abundance,newglycanDB.expecGlycan,newglycanDB.monoisomw);
-        plotMathchedFig(peaklist,matchedpeakindex,jpgname1);%wfMatch   = plotMathchedFig(peaklist,matchedpeakindex,jpgname1);
-        plotResidueFig(newglycanDB.Residue,jpgname2);%wfResidue = plotResidueFig(newglycanDB.Residue,jpgname2);
+        plotMathchedFig(peaklist,matchedpeakindex,jpgname1);
+        plotResidueFig(Residue,jpgname2);
         Workbook.Save;
         invoke(Excel,'Quit');
         Excel.delete
         clear Excel
     end 
-    savepath = [loadpath MSrawdata 'glycanDB' '.mat'];
+    MSrawdataFile = [MSrawdata 'glycanDB' '.mat'];
+    savepath = fullfile(MSdir, MSrawdataFile);
     outputfilename = [MSrawdata 'newglycanDB'];
-    save(savepath,'newglycanDB');
+    save(savepath,'newglycanDB','MSdata');
 end
 end
 
-function plotMathchedFig(peaklist,matchedpeakindex,jpgname)%wfResidual = plotMathchedFig(peaklist,matchedpeakindex,jpgname)
+function plotMathchedFig(peaklist,matchedpeakindex,jpgname)
 h=figure();
 ummatchedpeamz = peaklist(:,1);
 ummatchedpeamz(matchedpeakindex) = '';
 ummatchedpeaInt = peaklist(:,2);
 ummatchedpeaInt(matchedpeakindex) = '';
-% bar(ummatchedpeamz,ummatchedpeaInt,'r','EdgeColor','r');
-% hold on
+bar(ummatchedpeamz,ummatchedpeaInt,'r','EdgeColor','r');
+hold on
 bar(peaklist(matchedpeakindex,1),peaklist(matchedpeakindex,2),'g','EdgeColor','g');
 lowerbound = floor(ummatchedpeamz(1,1)/500)*500;
 upperbound = ceil(max(ummatchedpeamz(:,1))/500)*500;
@@ -99,7 +104,6 @@ ylabel('% Intensity','fontsize',10)
 xlabel('Mass(m/z)','fontsize',10);
 set(h,'PaperPositionMode','auto','visible','on','outerposition',[0,0,900,600],'position', [0,0,900,600]);
 saveas(h,jpgname);
-% wfResidual = webfigure(h);
 Excel = evalin('caller','Excel');
 Sheets = Excel.ActiveWorkBook.Sheets;
 sheet1 = get(Sheets, 'Item', 1);
@@ -111,7 +115,7 @@ Sheets.Add([], Sheets.Item(Sheets.Count));
 delete(h);
 end
 
-function plotResidueFig(Residue,jpgname2)%wfResidual = plotResidueFig(Residue,jpgname2)
+function plotResidueFig(Residue,jpgname2)
 h2=figure();
 matchedpeamz = Residue(:,2);
 matchedpeaInt = Residue(:,3);
@@ -121,7 +125,6 @@ ylabel('Residue (%)','fontsize',10)
 xlabel('Mass(m/z)','fontsize',10);
 set(h2,'PaperPositionMode','auto','visible','off','outerposition',[0,0,900,600],'position', [0,0,900,600]);
 saveas(h2,jpgname2);
-% wfResidual = webfigure(h2);
 Excel = evalin('caller','Excel');
 Sheets = Excel.ActiveWorkBook.Sheets;
 sheet1 = get(Sheets, 'Item', 1);

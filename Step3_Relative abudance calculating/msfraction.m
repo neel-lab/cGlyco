@@ -1,4 +1,4 @@
-function [newglycanDB,matchedpeakindex] = msfraction(peaklist,PWFH,glycanDB,OverSegmentationFilter,varargin)
+function [newglycanDB,Residuemz,matchedpeakindex] = msfraction(peaklist,FWHM,glycanDB,OverSegmentationFilter,varargin)
 % msfraction: peak assignment and relative abundance calculation
 % 
 % Syntax:
@@ -72,7 +72,7 @@ for i=1:length(expecGlycan)
     % Step 3: Relative abundance calculation
     % Calculate the peak area
     [peakarea,matchedpeakindex,isexist,IDvalue,centroidMass,targetWindow,targetMono,Residuemz] =...
-        findoverlaparea(finalithmddouble,monopeak,ID,peaklist,PWFH,matchedpeakindex,...
+        findoverlaparea(finalithmddouble,monopeak,ID,peaklist,FWHM,matchedpeakindex,...
         finalAssignWindow,finalIndexList,Residuemz);
     if(~isexist)
         deleteindex(end+1) = i;
@@ -109,7 +109,6 @@ newglycanDB.expecGlycan         = expecGlycan;
 newglycanDB.finalAssignmentList = finalAssignmentList;
 newglycanDB.WindowMass          = WindowMass;
 newglycanDB.WindowIDvalue       = WindowIDvalue;
-newglycanDB.Residue             = Residuemz;
 end
 
 function [AssignWindow,overlapindexArray,ithmddouble] =...
@@ -190,47 +189,23 @@ else
 end
 if(~isempty(monopeakindex))
     [AssignWindowList,mddoubleList,starIndexList] =...
-        modifyAssignWindow(AssignWindow,monopeakindex,overlapindexArray,peaklist,mddouble);
+        modifyAssignWindow(AssignWindow,monopeakindex,overlapindexArray,peaklist,mddouble,OverSegmentationFilter);
     
     % Isotopic mass distribution can not distance too far away.
     monopeak = [];
     for i = 1 : length(monopeakindex)
         ithAssignWindow = AssignWindowList{i};
-        peakindex = monopeakindex(i);
-        count     = 1;
-        for j = 2 : length(ithAssignWindow) 
-            peakindex = peakindex+1;
-            if((roundn(peaklist(peakindex,1),-1)-roundn(peaklist(peakindex-1,1),-1))<=OverSegmentationFilter*1.2)
-                count = count+1;
-            else
-                break
-            end
-        end
-        if(ismultiglycan)
-            if(firstmz<3000)
-                Minpeaknumber = 3;
-            else
-                Minpeaknumber = 4;% MinIsopeak(1);
-            end
-            if(count>=Minpeaknumber)
-                monopeak   = [monopeak monopeakindex(i)];
-                finalithmddouble = mddoubleList{i};
-                finalmddouble{end+1}     = finalithmddouble;
-                finalAssignWindow{end+1} = AssignWindowList{i}(1:count);
-                finalIndexList{end+1}    = starIndexList{i};
-            end
+        count           = length(ithAssignWindow);
+        if(firstmz<3000)
+            Minpeaknumber = 3;
         else
-            if(firstmz<3000)
-                Minpeaknumber = 3;
-            else
-                Minpeaknumber = 4;%length(ithAssignWindow); 
-            end
-            if(count>=Minpeaknumber)
-                monopeak = [monopeak monopeakindex(i)];
-                finalmddouble{end+1}     = mddoubleList{i};
-                finalAssignWindow{end+1} = AssignWindowList{i};
-                finalIndexList{end+1}    = starIndexList{i};
-            end
+            Minpeaknumber = 4;% MinIsopeak(1);
+        end
+        if(count>=Minpeaknumber)
+            monopeak   = [monopeak monopeakindex(i)];
+            finalmddouble{end+1}     = mddoubleList{i};
+            finalAssignWindow{end+1} = AssignWindowList{i};
+            finalIndexList{end+1}    = starIndexList{i};
         end
     end
     if(~isempty(monopeak))
@@ -329,7 +304,7 @@ end
 end
 
 function [AssignWindowList,mddoubleList,starIndexList] =...
-    modifyAssignWindow(AssignWindow,monopeak,overlapindexArray,peaklist,mddouble)
+    modifyAssignWindow(AssignWindow,monopeak,overlapindexArray,peaklist,mddouble,OverSegmentationFilter)
 AssignWindowList = cell(length(monopeak),1);
 mddoubleList     = cell(length(monopeak),1);
 starIndexList    = cell(length(monopeak),1);
@@ -339,6 +314,11 @@ for i = 1 :length(monopeak)
     ithAssignWindow   = [];
     for j = 1 : length(AssignWindow)
         if(peakindex<=length(peaklist))
+            if(j>1)
+                if((roundn(peaklist(peakindex,1),-1)-roundn(peaklist(peakindex-1,1),-1))>OverSegmentationFilter*2)
+                    break
+                end
+            end
             if((peaklist(peakindex,2)/maxIntensity)>0.15)
                 ithAssignWindow(end+1,1) = peaklist(peakindex,1);
                 maxIntensity = max(maxIntensity,peaklist(peakindex,2));
@@ -405,7 +385,7 @@ for j = 1 : length(peakarea)
         relativeabundance(index+1,1) = jthpeakarea;
     else
 % Linear signal reduction
-        jthpeakarea = jthpeakarea*(1+(glycanmwarray{glycanindex,1}(1,1)-1500)/1000);
+        jthpeakarea = jthpeakarea*(1+(glycanmwarray{glycanindex,1}(1,1)-1500)/2000);
         relativeabundance(index+1,1) = jthpeakarea;
     end
     allpeaktotalarea      = allpeaktotalarea+jthpeakarea;

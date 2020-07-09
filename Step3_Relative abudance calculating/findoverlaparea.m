@@ -1,5 +1,5 @@
 function  [glycanarea,matchedpeakindex,isexist,IDvalue,centroidMass,targetWindow,targetMono,Residuemz]= findoverlaparea(mdList,...
-    monopeak,ID,peaklist,pfwhh,matchedpeakindex,finalAssignWindow,starIndexList,Residuemz)
+    monopeak,ID,peaklist,FWHM,matchedpeakindex,finalAssignWindow,starIndexList,Residuemz)
 % findoverlaparea: find peak area when there are multi-glycans
 %
 % See also msfraction.
@@ -23,10 +23,10 @@ for i = 1 : length(mdList)
     ithAssignWindow = finalAssignWindow{i};
     startIndex      = starIndexList{i};
     % Step1 Calcualte experimental area
-    [exptPeakarea,Totalarea] = CalExptArea(ithmonopeak,ithAssignWindow,pfwhh,peaklist);
+    [exptPeakarea,Totalarea] = CalExptArea(ithmonopeak,ithAssignWindow,FWHM,peaklist);
     
     % Step2 Calcualte theoretical area
-    TheoArea = CalInitialGuess(ithmd,ithmonopeak,pfwhh,peaklist,startIndex);
+    TheoArea = CalInitialGuess(ithmd,ithmonopeak,FWHM,peaklist,startIndex);
     
     % minimize function
     [TheoArea,FVAL] = fmin(ithmd,TheoArea,exptPeakarea,Totalarea,startIndex);
@@ -57,12 +57,12 @@ if(ismatch)
 end
 end
 
-function [exptPeakarea,Totalarea] = CalExptArea(monopeak,AssignWindow,pfwhh,peaklist)
+function [exptPeakarea,Totalarea] = CalExptArea(monopeak,AssignWindow,FWHM,peaklist)
 Totalarea    = 0;
 startpeak    = monopeak;
 exptPeakarea = [];
 for i = 1 : length(AssignWindow)
-    ithPeakarea     = abs(pfwhh(startpeak,1)-pfwhh(startpeak,2))*peaklist(startpeak,2);
+    ithPeakarea     = abs(FWHM(startpeak,1)-FWHM(startpeak,2))*peaklist(startpeak,2);
     Totalarea       = Totalarea+ithPeakarea;
     exptPeakarea(i) = ithPeakarea;
     startpeak       = startpeak+1;
@@ -111,19 +111,19 @@ for i = 1 : glycannum
 end
 end
 
-function TheoArea = CalInitialGuess(md,monopeak,pfwhh,peaklist,startIndex)
+function TheoArea = CalInitialGuess(md,monopeak,FWHM,peaklist,startIndex)
 numofglycans    = length(md);
 TheoArea        = cell(numofglycans,1);
 % Calculate initial guess by theoretical relative abundance
 for i = 1 : numofglycans
     ithglycandist    = md{i}(:,2);
     if(i==1)
-        ithpeakarea = abs(pfwhh(monopeak,1)-pfwhh(monopeak,2))...
+        ithpeakarea = abs(FWHM(monopeak,1)-FWHM(monopeak,2))...
             *peaklist(monopeak,2);
         TheoArea{i} = ithpeakarea/ithglycandist(1,1);
     else
         isotopicindex = monopeak+startIndex(i)-1;
-        ithpeakarea   = abs(pfwhh(isotopicindex,1)-pfwhh(isotopicindex,2))...
+        ithpeakarea   = abs(FWHM(isotopicindex,1)-FWHM(isotopicindex,2))...
                       *peaklist(isotopicindex,2);
         for j = 1 :  i-1
             jthglycandist     = md{j}(:,2);
