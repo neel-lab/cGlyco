@@ -1,5 +1,8 @@
+%% This is the test file for cGlyco with examples for Bcells and Monocytes.
+%% To run this program, simply change the rootdir depending on the location of the installation directory of cGlyco
+%% Then step throught the program to execute individual program modules
 %% Define the root path of the cGlyco
-rootdir = 'D:\Work\cGlyco(new)';
+rootdir = 'C:\Work\cGlyco';
 
 %% Other dir
 Bcelldir      = fullfile(rootdir,'Testcase\Bcell');
