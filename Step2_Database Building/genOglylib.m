@@ -1,4 +1,4 @@
-function [glycanDB,outputname,LibSize] = genOglylib(antennalib,coreStruct,withLinkage,storepath)
+function [glycanDB,outputname,LibSize] = genOglylib(antennalib,coreStruct,withLinkage,storedir)
 % genOglylib: generate O-glycan library by combining user defined glycan
 % antenna with likage infomation
 %
@@ -20,7 +20,6 @@ function [glycanDB,outputname,LibSize] = genOglylib(antennalib,coreStruct,withLi
 %
 % Children function: UNREPNUMGEN.m
 % Author: Kai Cheng, Yusen Zhou 5/18/2020
-fullpath = [storepath 'Oglycanlib'];
 if(withLinkage)
     if(strcmp(coreStruct,'core1')||strcmp(coreStruct,'core2'))
         ocore = {'{n_a{h_b3','}','}'};
@@ -60,7 +59,7 @@ massoption.acetylation = false;
 massoption.methylation = true;
 massoption.ion = 'Na';
 
-[glycanDB,outputname,LibSize] = reformatStrlib(OglyLib,0,massoption,storepath);
+[glycanDB,outputname,LibSize] = reformatStrlib(OglyLib,0,massoption,storedir);
 end
 
 function antenna_linkage = crelinkage(antennalib,coreStruct)

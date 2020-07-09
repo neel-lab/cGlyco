@@ -1,4 +1,4 @@
-function [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLinkage,storepath,GlyType,varargin)
+function [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLinkage,storedir,GlyType,varargin)
 % genGlyLib: generates glycan library by combining user defined glycan
 % antenna with likage infomation
 %
@@ -26,16 +26,16 @@ function [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLin
 %   isotopic distribution
 %
 % Example1:
-%   antennalib = {'';...                    % define all possible forms of antennas here 1
-%     '{n}';...                             % 2
-%     '{n{h_b4}}';...                       % 3
-%     '{n{f_a3}{h_b4}}';...                 % 4
-%     '{n{h_b4{s_a3}}}';...                 % 5
-%     '{n{f_a3}{h_b4{s_a3}}}';...           % 6
-%     '{n{h_b4{n_b3{h_b4}}}}';...           % 7
-%     '{n{h_b4{n_b3{f_a3}{h_b4}}}}';...     % 8
-%     '{n{h_b4{n_b3{h_b4{s_a3}}}}}';...     % 9
-%     '{n{h_b4{n_b3{f_a3}{h_b4{s_a3}}}}}'}; % 10
+% antennalib = {'';...                      % define all possible form of antennas here 1
+%     'GlcNAc(b1-?)';...                             % 2
+%     'Gal(b1-4)GlcNAc(b1-?)';...                       % 3
+%     'Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-?)';...                 % 4
+%     'NeuAc(a2-3)Gal(b1-4)GlcNAc(b1-?)';...                 % 5
+%     'NeuAc(a2-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-?)';...           % 6
+%     'Gal(b1-4)GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...           % 7
+%     'Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...     % 8
+%     'NeuAc(a2-3)Gal(b1-4)GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...     % 9
+%     'NeuAc(a2-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)'}; % 10
 %
 %   coreStruct  ='core1';
 %   BranchType  ='Bi';
@@ -47,17 +47,17 @@ function [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLin
 %   [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLinkage,storepath,GlyType,BranchType,highmannose);
 %
 % Example2:
-%   antennalib = {'';...                        % define all possible form of antennas here 1
-%     '{s}';...                               % 2
-%     '{n{h_b4}}';...                         % 3
-%     '{n{f_a3}{h_b4}}';...                   % 4
-%     '{n{h_b4{s_a3}}}';...                   % 5
-%     '{n{f_a3}{h_b4{s_a3}}}';...             % 6
-%     '{n{h_b4{n_b3{h_b4}}}}';...             % 7
-%     '{n{h_b4{n_b3{f_a3}{h_b4}}}}';...       % 8
-%     '{n{h_b4{n_b3{h_b4{s_a3}}}}}';...       % 9
-%     '{n{h_b4{n_b3{f_a3}{h_b4{s_a3}}}}}'};   % 10
-%
+% antennalib = {'';...                        % define all possible form of antennas here 1
+%     'NeuAc(a2-?)';...                               % 2
+%     'Gal(b1-4)GlcNAc(b1-?)';...                         % 3
+%     'Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-?)';...                   % 4
+%     'NeuAc(a2-3)Gal(b1-4)GlcNAc(b1-?';...                   % 5
+%     'NeuAc(a2-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-?)';...             % 6
+%     'Gal(b1-4)GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...             % 7
+%     'Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...       % 8
+%     'NeuAc(a2-3)Gal(b1-4)GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)';...       % 9
+%     'NeuAc(a2-3)Gal(b1-4)[Fuc(a1-3)]GlcNAc(b1-3)Gal(b1-4)GlcNAc(b1-?)'};   % 10
+% 
 %   coreStruct  = 'core1';
 %   withLinkage = 1;
 %   storepath   = 'C:\Users\GoEason\Desktop\Paper&dissertation\P0_GDAT\GDAT\Testcase\';
@@ -66,13 +66,21 @@ function [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLin
 %   [glycanDB,outputname,LibSize] = genGlyLib(antennalib,coreStruct,withLinkage,storepath,GlyType);
 %
 % Author: Yusen Zhou
-% Date Lastly Updated: 05/18/2020
+% Date Lastly Updated: 06/25/2020
+
+% Convert IUPAC to SGP format
+numOfantenna  = length(antennalib);
+newantennalib = cell(numOfantenna,1);
+for i = 1:numOfantenna
+    ithantenna = antennalib{i};
+    newantennalib{i} = IUPAC2Sgp(ithantenna);
+end
 
 if(strcmp(GlyType,'N-'))
     BranchType = varargin{1};
     highmannose = varargin{2};
-    [glycanDB,outputname,LibSize] = genNglylib(antennalib,coreStruct,BranchType,withLinkage,highmannose,storepath);
+    [glycanDB,outputname,LibSize] = genNglylib(newantennalib,coreStruct,BranchType,withLinkage,highmannose,storedir);
 else
-    [glycanDB,outputname,LibSize] = genOglylib(antennalib,coreStruct,withLinkage,storepath);
+    [glycanDB,outputname,LibSize] = genOglylib(newantennalib,coreStruct,withLinkage,storedir);
 end
 end

@@ -1,4 +1,4 @@
-function [glycanDB,outputname,LibSize] = genNglylib(antennalib,coreStruct,BranchType,withLinkage,highmannose,storepath )
+function [glycanDB,outputname,LibSize] = genNglylib(antennalib,coreStruct,BranchType,withLinkage,highmannose,storedir)
 % genlib: generate N-glycan library by combining user defined glycan
 % antenna with likage infomation
 %
@@ -30,7 +30,6 @@ function [glycanDB,outputname,LibSize] = genNglylib(antennalib,coreStruct,Branch
 % Date Lastly Updated: 05/18/2020
 
 %% Generate N_Glycan structure list
-fullpath = [storepath 'Nglycanlib'];
 if(withLinkage)
     antenna_linkage = addlinkage(antennalib);
     antennanum      = numel(antenna_linkage)/4;
@@ -54,7 +53,7 @@ massoption.acetylation = false;
 massoption.methylation = true;
 massoption.ion = 'Na';
 
-[glycanDB,outputname,LibSize] = reformatStrlib(NglyLib,1,massoption,storepath);
+[glycanDB,outputname,LibSize] = reformatStrlib(NglyLib,1,massoption,storedir);
 end
 
 function antenna_linkage = addlinkage(antennalib)
