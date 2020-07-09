@@ -1,5 +1,5 @@
 function [peaklist,pfwhh]= msprocess(msrawdata,min,max,varargin)
-%MSPROCESS converts raw peak data to a peak list and their half height width column
+%MSPROCESS convert raw peak data to a peak list and their half height width column
 % using a four-step method. The method starts with background adjustment,
 % followed by the normalization, signal noise removal, and ends with peak
 % finding.
@@ -15,7 +15,7 @@ function [peaklist,pfwhh]= msprocess(msrawdata,min,max,varargin)
 %   parameters for mass spectra processing. 
 %
 
-% See also readMS
+% See also readMS.
 
 % Author: Gang Liu, Yusen Zhou
 % Date Lastly Updated: 5/18/20

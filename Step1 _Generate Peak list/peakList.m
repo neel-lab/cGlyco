@@ -1,18 +1,18 @@
-function [MSdata,fitPara]=peakList(msrawdatafilename,varargin)
+function [MSdata,fitPara]=peakList(fname,varargin)
 % [MSdata,firstPeak,wf]=peakList(msrawdatafilename,varargin)
 % peakList: loads raw MS data and use msprocess code to convert raw peak 
 % data to a peak list and their half height width column (FWHM)
 %
-% MSdata = peakList(msrawdatafilename) use the default value of msrawdatapath
+% MSdata = peakList(fname) use the default value of msrawdatapath
 % and options to convert 'msrawdatafilename' file, a '.txt' file, into matlab form 
 % and then preprocesses it by using a four-step method to finally get the peak 
 % list and their FWHM.
 %
-% MSdata = peakList(msrawdatafilename,'msrawdatapathstr',msrawdatapath) find the 'msrawdatafilename' 
+% MSdata = peakList(fname,'msrawdatapathstr',msrawdatapath) find the 'msrawdatafilename' 
 % file in msrawdatapath and converts it into matlab form and then preprocesses it 
 % by using a four-step method to finally get the peak list and FWHM.
 %
-% MSdata = peakList(msrawdatafilename,'optionsstr',options) sets up your 
+% MSdata = peakList(fname,'optionsstr',options) sets up your 
 % own options and converts msrawdatafilename file into matlab form and then 
 % preprocesses it using a four-step method to finally get the peak list and
 % FWHM. 
@@ -20,12 +20,12 @@ function [MSdata,fitPara]=peakList(msrawdatafilename,varargin)
 % See also MSprocess
 % This requires the MATLAB Bioinformatics toolbox
 
-% Author: Yusen Zhou
-% Date Lastly Updated: 5/18/20
+% Author: Yusen Zhou & Gang Liu
+% Date Lastly Updated: 6/25/20
 
 
 % default value
-msDataPath     = 'C:\Users\GoEason\Desktop\Paper&dissertation\P0_GDAT\GDAT\CFGAnalysis\Bcell';
+dir = 'D:\Work\cGlyco\Testcase\Lung';
 options.MA                     = 0.9;
 options.heightFilter           = 0.003;
 options.unit                   = 'Da';
@@ -37,7 +37,7 @@ nvarargin = numel(varargin);
 if rem(nvarargin,2)
     error(message('IncorrectNumberOfArguments'));
 end
-okargs    = {'msrawdatapathstr','optionsstr','min','max','SN'};
+okargs    = {'dir','optionsstr','min','max','SN'};
 for j=1:2:nvarargin
     pname = varargin{j};
     pval = varargin{j+1};
@@ -49,7 +49,7 @@ for j=1:2:nvarargin
     else
         switch(k)
             case 1 % msrawdatapathstr
-                msDataPath = pval;
+                dir = pval;
             case 2 % optionsstr
                 options.MA           = pval.MA;
                 options.heightFilter = pval.heightFilter;
@@ -64,12 +64,12 @@ end
 
 % read MS raw data
 fitPara = cell(4,1);
-filename  = [msrawdatafilename '.txt'];
-msrawdatafullfilename = fullfile(msDataPath,filename);
+filename  = [fname '.txt'];
+msrawdatafullfilename = fullfile(dir,filename);
 data      = readMS(msrawdatafullfilename);
 % Preprocess of MS data
-[peaklist,pfwhh] = msprocess(data,min,max,options);
-[noisepeaklist,peaklist,pfwhh] = modifyPeaks(peaklist,pfwhh,SN);
+[peaklist,FWHM] = msprocess(data,min,max,options);
+[noisepeaklist,peaklist,FWHM] = modifyPeaks(peaklist,FWHM,SN);
 try
     % Non-linear
     fitFun = fit(noisepeaklist(:,1),noisepeaklist(:,2),'exp2');
@@ -79,8 +79,8 @@ try
     fitPara{4} = fitFun.d;
 catch
 end
-MSdata   = struct('peaklist',peaklist,'pfwhh',pfwhh);
-filepath = fullfile(msDataPath,msrawdatafilename);
+MSdata   = struct('peaklist',peaklist,'FWHM',FWHM);
+filepath = fullfile(dir,fname);
 save(filepath,'MSdata');
 end
 
