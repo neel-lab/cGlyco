@@ -1,4 +1,4 @@
-function SingleMSAnalysisR(GlycanDB,withHighmannose,outputfilename,loadpath)
+function SingleMSAnalysisR(glycanDB,withHighmannose,outputfilename,storepath)
 % SingleMSAnalysisR: Calculate relative abundance of different
 % monosaccharides 
 %
@@ -7,18 +7,17 @@ function SingleMSAnalysisR(GlycanDB,withHighmannose,outputfilename,loadpath)
 % Author: Yusen Zhou
 % Date Lastly Updated: 05/18/2020
 % Load the glycanDB
-DBfilepath = [loadpath GlycanDB '.mat'];
-load(DBfilepath)
+
 % calculate MS Residue relativeabundance(Gal, GlcNAc, GalNAc, Fuc, NeuAc)
-GalAbundance    = calculatebyStr(newglycanDB,'Gal',withHighmannose);
-GlcNAcAbundance = calculatebyStr(newglycanDB,'GlcNAc',withHighmannose);
-GalNAcAbundance = calculatebyStr(newglycanDB,'GalNAc',withHighmannose);
-FucAbundance    = calculatebyStr(newglycanDB,'Fuc',withHighmannose);
-NeuAcAbundance  = calculatebyStr(newglycanDB,'NeuAc',withHighmannose);
+GalAbundance    = calculatebyStr(glycanDB,'Gal',withHighmannose);
+GlcNAcAbundance = calculatebyStr(glycanDB,'GlcNAc',withHighmannose);
+GalNAcAbundance = calculatebyStr(glycanDB,'GalNAc',withHighmannose);
+FucAbundance    = calculatebyStr(glycanDB,'Fuc',withHighmannose);
+NeuAcAbundance  = calculatebyStr(glycanDB,'NeuAc',withHighmannose);
 % Export to the Excel
-filespec_user = [loadpath outputfilename '.xlsx'];
-jpgnameS = [loadpath outputfilename 'ResidueAbundanceS.jpg'];
-jpgnameR = [loadpath outputfilename 'ResidueAbundanceR.jpg'];
+filespec_user = [storepath outputfilename '.xlsx'];
+jpgnameS = [storepath outputfilename 'ResidueAbundanceS.jpg'];
+jpgnameR = [storepath outputfilename 'ResidueAbundanceR.jpg'];
 try
     Excel=actxGetRunningServer('Excel.Application');
 catch

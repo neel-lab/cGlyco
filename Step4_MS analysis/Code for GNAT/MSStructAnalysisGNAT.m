@@ -1,45 +1,23 @@
-function StructResult = MSStructAnalysisGNAT(MSfilename,newglycanDB)
+function StructResult = MSStructAnalysisGNAT(MSfilename,newglycanDB,listOfStruct)
 % CalSingleMSStruct: Calculate relative abundance of different substructure for multi
 % glycan profiles.
 %
-%
+% List of structure option: LeX(LewisX), Lea(Lewisa), sialylLeX(sialylLewisx), sialylLea(sialylLewisa),
+% Ley(Lewisy), Leb(Lewisb), LacNAc, Sia_LacNAc(SialylLacNAc), Hantigen(H_Antigen),
+% Aantigen(A_Antigen), Bantigen(B_Antigen), Bisecting, coreFuc.
 %
 % Author: Yusen Zhou
 % Date Lastly Updated: 05/18/2020
 
-StructResult = struct('MSID',[],'Lewisx',[],'Lewisa',[],'sialylLewisx',[],'sialylLewisa',[],'Lewisy',[],'Lewisb',[],...
-    'LacNAc',[],'SialylLacNAc',[],'Hantigen',[],'Aantigen',[],'Bantigen',[],'Bisecting',[],'coreFuc',[]);
+StructResult = struct('MSID',[]);
 % calculate MS subStructure relativeabundance(lewis x/a, sialyl-Lewis x/a, 
 %              Lewis y/b, H_Antigen, A_Antigen, B_Antigen, Bisecting, coreFuc)
-MonoIdx      = MonoIDgeneration;
-LeX          = calbystruct(newglycanDB,'LeX',MonoIdx);
-Lea          = calbystruct(newglycanDB,'Lea',MonoIdx);
-sialylLeX    = calbystruct(newglycanDB,'sialylLeX',MonoIdx);
-sialylLea    = calbystruct(newglycanDB,'sialylLea',MonoIdx);
-Ley          = calbystruct(newglycanDB,'Ley',MonoIdx);
-Leb          = calbystruct(newglycanDB,'Leb',MonoIdx);
-LacNAc       = calbystruct(newglycanDB,'LacNAc',MonoIdx);
-Sia_LacNAc   = calbystruct(newglycanDB,'Sia_LacNAc',MonoIdx);
-Hantigen     = calbystruct(newglycanDB,'Hantigen',MonoIdx);
-Aantigen     = calbystruct(newglycanDB,'Aantigen',MonoIdx);
-Bantigen     = calbystruct(newglycanDB,'Bantigen',MonoIdx);
-Bisecting    = calbystruct(newglycanDB,'Bisecting',MonoIdx);
-coreFuc      = calbystruct(newglycanDB,'coreFuc',MonoIdx);
-
-StructResult.MSID             = MSfilename;
-StructResult.Lewisx           = LeX;
-StructResult.Lewisa           = Lea;
-StructResult.sialylLewisx     = sialylLeX;
-StructResult.sialylLewisa     = sialylLea;
-StructResult.Lewisy           = Ley;
-StructResult.Lewisb           = Leb;
-StructResult.LacNAc           = LacNAc;
-StructResult.SialylLacNAc     = Sia_LacNAc;
-StructResult.Hantigen         = Hantigen;
-StructResult.Aantigen         = Aantigen;
-StructResult.Bantigen         = Bantigen;
-StructResult.Bisecting        = Bisecting;
-StructResult.coreFuc          = coreFuc;
+MonoIdx           = MonoIDgeneration;
+StructResult.MSID = MSfilename;
+for i = 1:length(listOfStruct)
+    ithStruct = listOfStruct{i};
+    StructResult.(ithStruct) = calbystruct(newglycanDB,ithStruct,MonoIdx);
+end
 end
 
 function specificstructabundance = calbystruct(newglycanDB,glycanStruct,MonoIdx)

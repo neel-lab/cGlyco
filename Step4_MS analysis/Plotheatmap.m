@@ -15,16 +15,19 @@ function [ResidueTypeExist,StructTypeExist] = Plotheatmap(ResidueMSFileList,Stru
 ResidueDataMat = cell(length(ResidueMSFileList),1);
 StructDataMat  = cell(length(StructMSFileList),1);
 for i = 1:length(ResidueMSFileList)
-    ithfilefullpath = [loadpath ResidueMSFileList{i} '.mat'];
-    load(ithfilefullpath);
+    ithResidueMSFileList = [ResidueMSFileList{i} '.mat'];
+    ithfilefullpath = fullfile(loadpath, ithResidueMSFileList);
+    load(ithfilefullpath,'ResidueResult');
     ResidueDataMat{i,1} = ResidueResult;
 end
 for i = 1:length(StructMSFileList)
-    ithfilefullpath = [loadpath StructMSFileList{i} '.mat'];
-    load(ithfilefullpath);
+    ithStructMSFileList = [StructMSFileList{i} '.mat'];
+    ithfilefullpath = fullfile(loadpath, ithStructMSFileList);
+    load(ithfilefullpath,'StructResult');
     StructDataMat{i,1} = StructResult;
 end
-filespec_user = [loadpath outputfilename '.xlsx'];
+outputfilename = [outputfilename '.xlsx'];
+filespec_user = fullfile(loadpath, outputfilename);
 try
     Excel=actxGetRunningServer('Excel.Application');
 catch
@@ -37,8 +40,8 @@ else
     Workbook = invoke(Workbooks, 'Add');
     Workbook.SaveAs(filespec_user);
 end
-colormappath = [colormaploadpath 'mycolor.mat'];
-load(colormappath)
+colormappath = fullfile(colormaploadpath, 'mycolor.mat');
+load(colormappath,'mycolor');
 [ResidueTypeExist,sheetnumber] = PlotResidueHeatMap(ResidueDataMat,mycolor,storepath,filespec_user);
 StructTypeExist  = PlotStructHeatMap(StructDataMat,mycolor,storepath,sheetnumber,filespec_user);
 Workbook.Save;
@@ -51,9 +54,9 @@ function [ResidueTypeExist,sheetnumber] = PlotResidueHeatMap(ResidueDataMat,myco
 ResidueType = cell(4,1);
 ResidueType{1,1} = 'Gal';
 ResidueType{2,1} = 'GlcNAc';
-% ResidueType{3,1} = 'GalNAc';
-ResidueType{3,1} = 'Fuc';
-ResidueType{4,1} = 'NeuAc';
+ResidueType{3,1} = 'Man';
+ResidueType{4,1} = 'Fuc';
+ResidueType{5,1} = 'NeuAc';
 ResidueTypeExist = ResidueType;
 deleteCell = [];
 sheetnumber = 0;
@@ -81,7 +84,7 @@ for i = 1 : length(ResidueType)
         end
         F = figure();
         heatmap(ValueDataS, columLabels, RowLabels,'%0.2f',...
-            'Colormap',mycolor, 'Colorbar', 'true', 'TickAngle', 45,'FontSize',15,'TickFontSize',15);
+            'Colormap',mycolor, 'Colorbar', 'true', 'TickAngle', 45,'FontSize',18,'TickFontSize',18);
         if(max(max(abs(ValueDataS)))~=0)
             colorrange = ceil(max(max(abs(ValueDataS)))/0.5)*0.5;
         else
@@ -92,7 +95,8 @@ for i = 1 : length(ResidueType)
         TitleS = ['% relative abundance (' ResidueType{i,1} ')'];
         title(TitleS,'Fontsize',18);
         set(F,'PaperPositionMode','auto','visible','off','outerposition',[0,0,1100,800],'position', [0,0,900,600]);
-        storepath1 = [storepath,'GlycanS_' ResidueType{i,1} '.jpg'];
+        StoreFile = ['GlycanS_' ResidueType{i,1} '.jpg'];
+        storepath1 = fullfile(storepath,StoreFile);
         print(F,'-djpeg',storepath1);
         delete(F);
         for j = 1:MSnumber
@@ -108,7 +112,7 @@ for i = 1 : length(ResidueType)
         sheetnumber = sheetnumber+1;
         F = figure();
         heatmap(ValueDataR, columLabels, RowLabels,'%0.2f',...
-            'Colormap',mycolor, 'Colorbar', 'true','TickAngle', 45,'FontSize',15,'TickFontSize',15);
+            'Colormap',mycolor, 'Colorbar', 'true','TickAngle', 45,'FontSize',18,'TickFontSize',18);
          if(max(max(abs(ValueDataR)))~=0)
             colorrange = ceil(max(max(abs(ValueDataR)))/0.5)*0.5;
         else
@@ -119,7 +123,8 @@ for i = 1 : length(ResidueType)
         TitleR = ['% relative abundance (' ResidueType{i,1} ')'];
         title(TitleR,'Fontsize',18);
         set(F,'PaperPositionMode','auto','visible','off','outerposition',[0,0,900,600],'position', [0,0,900,600]);
-        storepath2 = [storepath,'GlycanR_' ResidueType{i,1} '.jpg'];
+        StoreFile = ['GlycanR_' ResidueType{i,1} '.jpg'];
+        storepath2 = fullfile(storepath,StoreFile);
         print(F,'-djpeg',storepath2);
         delete(F);
         Excel = evalin('caller','Excel');
@@ -148,9 +153,9 @@ end
 function StructTypeExist  = PlotStructHeatMap(StructDataMat,mycolor,storepath,sheetnumber,filespec_user)
 StructType  = cell(10,1);
 Structtitle = cell(10,1);
-StructType{1,1}  ='Lewisx';
-StructType{2,1}  ='sialylLewisx';
-StructType{3,1}  ='Lewisy';
+StructType{1,1}  ='LeX';
+StructType{2,1}  ='sialylLeX';
+StructType{3,1}  ='Ley';
 StructType{4,1}  ='LacNAc';
 StructType{5,1}  ='SialylLacNAc';
 StructType{6,1}  ='Hantigen';
@@ -194,7 +199,7 @@ for i = 1 : length(StructType)
         end
         F = figure();
         heatmap(ValueDataSp, columLabels, RowLabels,'%0.2f',...
-            'Colormap',mycolor, 'Colorbar', 'true','TickAngle', 45,'FontSize',15,'TickFontSize',15);
+            'Colormap',mycolor, 'Colorbar', 'true','TickAngle', 45,'FontSize',18,'TickFontSize',18);
         if(max(max(abs(ValueDataSp)))~=0)
             colorrange = ceil(max(max(abs(ValueDataSp)))/0.5)*0.5;
         else
@@ -205,7 +210,8 @@ for i = 1 : length(StructType)
         TitleSp = ['% relative abundance of glycan with (' Structtitle{i,1} ')'];
         title(TitleSp,'Fontsize',18);
         set(F,'PaperPositionMode','auto','visible','off','outerposition',[0,0,900,600],'position', [0,0,900,600]);
-        StorePath1 = [storepath,'GlycanSp_' StructType{i,1} '.jpg'];
+        StoreFile = ['GlycanSp_' StructType{i,1} '.jpg'];
+        StorePath1 = fullfile(storepath,StoreFile);
         print(F,'-djpeg',StorePath1);
         delete(F);
         for j = 1:MSnumber
@@ -234,7 +240,8 @@ for i = 1 : length(StructType)
         TitleSt = ['% relative abundance of glycan with (' Structtitle{i,1} ')'];
         title(TitleSt,'Fontsize',18);
         set(F,'PaperPositionMode','auto','visible','off','outerposition',[0,0,900,600],'position', [0,0,900,600]);
-        StorePath2 = [storepath,'GlycanSt_' StructType{i,1} '.jpg'];
+        StoreFile = ['GlycanSt_' StructType{i,1} '.jpg'];
+        StorePath2 = fullfile(storepath,StoreFile);
         print(F,'-djpeg',StorePath2);
         delete(F);
         
@@ -263,7 +270,11 @@ end
 function MSComparisonList = checkMSList(ObjectDataMat,object)
 MSComparisonList = '';
 for i = 1:length(ObjectDataMat)
-    relativeValue = ObjectDataMat{i,1}.(object).glycanSpecies;
+    try
+        relativeValue = ObjectDataMat{i,1}.(object).glycanSpecies;
+    catch
+        relativeValue = 0;
+    end
     if(relativeValue>0)
         MSComparisonList{end+1}=ObjectDataMat{i,1};
     end

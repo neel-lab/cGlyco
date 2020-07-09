@@ -1,4 +1,4 @@
-function [Existense,WebFigure] = PlotheatmapStruct(glycanDB1,glycanDB2,Sameglycan,loadpath,colormaploadpath,storepath)
+function PlotheatmapStruct(glycanDB1,glycanDB2,loadpath,colormaploadpath,storepath)
 % PlotheatmapStruct: Plot heatmap based on the glycan composition to
 % compare two glycan profiles
 %
@@ -12,19 +12,18 @@ function [Existense,WebFigure] = PlotheatmapStruct(glycanDB1,glycanDB2,Sameglyca
 %
 % Author:Yusen Zhou
 % Data Lastly Updated:05/20/2020
-Sameglycanpath   = [loadpath Sameglycan '.mat'];
-load(Sameglycanpath);
-Existense = 'false';
+[~, glycanListcommon]= FindDiffGlycan(glycanDB1,glycanDB2,loadpath);
 if(length(glycanListcommon)>1)
-    MS1Loadpath      = [loadpath glycanDB1 '.mat'];
-    load(MS1Loadpath);
+    glycanDB1File    = [glycanDB1 '.mat'];
+    MS1Loadpath      = fullfile(loadpath, glycanDB1File);
+    load(MS1Loadpath, 'newglycanDB');
     MSFile1relativeA = findrelabundance(glycanListcommon,newglycanDB);
-    MS2Loadpath      = [loadpath glycanDB2 '.mat'];
-    load(MS2Loadpath);
+    glycanDB2File    = [glycanDB2 '.mat'];
+    MS2Loadpath      = fullfile(loadpath, glycanDB2File);
+    load(MS2Loadpath, 'newglycanDB');
     MSFile2relativeA = findrelabundance(glycanListcommon,newglycanDB);
     plotheatmap_struct(MSFile1relativeA,MSFile2relativeA,glycanListcommon,...
         glycanDB1,glycanDB2,colormaploadpath,storepath);
-    Existense = 'exist';
 end
 end
 
@@ -64,8 +63,8 @@ for i = 1:datanum
         ValueDataS(datanum-i+1,j)=log10(minValue);
     end
 end
-colormappath = [colormaploadpath 'mycolor.mat'];
-load(colormappath)
+colormappath = fullfile(colormaploadpath, 'mycolor.mat');
+load(colormappath, 'mycolor')
 F = figure();
 if(length(ValueDataS)>20)
     heatmap(ValueDataS, columLabels, RowLabels,[],...
@@ -80,7 +79,8 @@ set(gca, 'CLim', [-2, 2]);
 colorbar('YTickLabel',{'<-2','-1.5','-1','-0.5','0','0.5','1','1.5','>2'});
 set(F,'PaperPositionMode','auto','position', [0,0,1500,1600]);
 set(F,'visible','off');
-StorePath = [storepath,'Struct_based' MSFile1 '_' MSFile2 '.jpg'];
+StoreFile = ['Struct_based' MSFile1 '_' MSFile2 '.jpg'];
+StorePath = fullfile(storepath, StoreFile);
 print(F,'-djpeg',StorePath);
 delete(F);
 end

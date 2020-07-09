@@ -1,4 +1,4 @@
-function [glycanListdiff, glycanListcommon]= FindDiffGlycan(newglycanDB1,newglycanDB2,loadpath,varargin)
+function [glycanListdiff, glycanListcommon]= FindDiffGlycan(glycanDB1,glycanDB2,loadpath,varargin)
 %FindDiffGlycan is to compare two glycanlist and find the glycans that are
 % unique in each glycanlist.
 % 
@@ -13,24 +13,25 @@ function [glycanListdiff, glycanListcommon]= FindDiffGlycan(newglycanDB1,newglyc
 %Author: Yusen Zhou
 %Date Lastly Updated: 05/18/2020
 
-if(isempty(newglycanDB1))||...
-        (isempty(newglycanDB2))||...
+if(isempty(glycanDB1))||...
+        (isempty(glycanDB2))||...
         (isempty(loadpath))
     error(message('IncorrectInputs'));
 end
-
-fullpath = [loadpath newglycanDB1 '.mat'];
-load(fullpath);
+glycanDB1 = [glycanDB1 '.mat'];
+fullpath  = fullfile(loadpath, glycanDB1);
+load(fullpath, 'newglycanDB');
 comparegroup1 = getcompos(newglycanDB);
-fullpath = [loadpath newglycanDB2 '.mat'];
-load(fullpath);
+glycanDB2 = [glycanDB2 '.mat'];
+fullpath  = fullfile(loadpath, glycanDB2);
+load(fullpath, 'newglycanDB');
 comparegroup2 = getcompos(newglycanDB);
 
 glycansincommon1 = [];
 glycansindiff1   = [];
 count = 0;
 num   = 0;
-for i = 1 : length(comparegroup1);
+for i = 1 : length(comparegroup1)
     ithcomp    = comparegroup1{i};
     isincommon = sum(strcmpi(comparegroup2,ithcomp));
     if(isincommon)
@@ -43,7 +44,7 @@ for i = 1 : length(comparegroup1);
 end
 glycansincommon2 = [];
 count = 0;
-for i = 1 : length(comparegroup2);
+for i = 1 : length(comparegroup2)
     ithcomp    = comparegroup2{i};
     isincommon  = sum(strcmpi(comparegroup1,ithcomp));
     if(isincommon)
@@ -60,14 +61,15 @@ glycanListdiff.ListA = comparegroupdiff1;
 glycanListdiff.ListB = comparegroupdiff2;
 comparegroup1(glycansindiff1)= '';
 glycanListcommon = comparegroup1;
-savepath1 = [loadpath 'glycandiff.mat'];
-savepath2 = [loadpath 'glycancommon.mat'];
+savepath1 = fullfile(loadpath, 'glycandiff.mat');
+savepath2 = fullfile(loadpath, 'glycancommon.mat');
 save(savepath1,'glycanListdiff');
 save(savepath2,'glycanListcommon');
 
 if(~isempty(varargin))
     outputfilename = varargin{1};
-    excelfullpath = [loadpath outputfilename '.xlsx'];
+    outputfilename = [outputfilename '.xlsx'];
+    excelfullpath = fullfile(loadpath, outputfilename);
     A1=cellstr('Made by Glycomics Analysis tool');
     A2=cellstr('MS1_unique glycan');
     B2=cellstr('MS2_unique glycan');

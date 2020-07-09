@@ -1,4 +1,4 @@
-function ResidueResult = MSResidueAnalysis(MSfilename,GlycanDB,withHighmannose,loadpath)
+function ResidueResult = MSResidueAnalysis(MSfilename,newglycanDB,withHighmannose,storepath)
 % MSResidueAnalysis: Calculate relative abundance of different
 % monosaccharides for multi glycan profiles
 %
@@ -7,8 +7,6 @@ function ResidueResult = MSResidueAnalysis(MSfilename,GlycanDB,withHighmannose,l
 % Author: Yusen Zhou
 % Date Lastly Updated: 05/18/2020
 ResidueResult = struct('MSID',[],'Gal',[],'GlcNAc',[],'GalNAc',[],'Fuc',[],'NeuAc',[]);
-DBfilepath = [loadpath GlycanDB '.mat'];
-load(DBfilepath)
 % calculate MS Residue relativeabundance(Gal, GlcNAc, GalNAc, Fuc, NeuAc)
 GalAbundance    = calculatebyStr(newglycanDB,'Gal',withHighmannose);
 GlcNAcAbundance = calculatebyStr(newglycanDB,'GlcNAc',withHighmannose);
@@ -23,7 +21,7 @@ ResidueResult.GalNAc     = GalNAcAbundance;
 ResidueResult.Fuc        = FucAbundance;
 ResidueResult.NeuAc      = NeuAcAbundance;
 
-Storepath = [loadpath MSfilename 'Residue.mat'];
+Storepath = [storepath MSfilename 'Residue.mat'];
 save(Storepath,'ResidueResult');
 end
 
@@ -115,7 +113,7 @@ elseif(strcmp(ResidueStr,'NeuAc'))
     end
 end
 ResidueAbundance.glycanSpecies = roundn(SAbundance*100,-1);
-ResidueAbundance.glycanResidue = roundn(RAbundance,-1);
+ResidueAbundance.glycanResidue = roundn(RAbundance*100,-1);
 end
 
 function isHighmannose = chkhighmannose(Str)
